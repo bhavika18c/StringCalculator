@@ -8,21 +8,26 @@ namespace StringCalculator
 {
     public class Calculate
     {
+        const int defaultNumber = 0;
+        const int maxNo = 1000;
+        private List<string> delimiters = new List<string> { ",", "\\n", "\n" };
+        
         public static void Main(string[] args)
         {
-            string input = "";
+            string inputValue = "";
             while (true)
             {
                 Console.WriteLine("Enter string: ");
-                input = Console.ReadLine();
+                inputValue = Console.ReadLine();
 
-                if (input.ToLower().CompareTo("exit") == 0)
+                if (inputValue.ToLower().CompareTo("exit") == 0)
                 {
                     break;
                 }
                 try
                 {
-                    Console.WriteLine(CalculateString(input));
+                    Calculate c = new Calculate();
+                    Console.WriteLine(c.CalculateString(inputValue));
                 }
                 catch (CalculatorException ex)
                 {
@@ -36,46 +41,70 @@ namespace StringCalculator
         }
 
 
-        public static int CalculateString(string input)
+        public int CalculateString(string input)
         {
-            List<string> delimiters = new List<string> { ",", "\\n", "\n" }; 
+            if (String.IsNullOrWhiteSpace(input))
+                return defaultNumber;
+
+
 
             if (input.StartsWith("//"))
             {
-                try
-                {
-                    List<string> sections = input.Split(new string[] { "\n", "\\n" }, 2, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    if (sections[0].Length > 3 && (!sections[0].Contains('[') || !sections[0].Contains(']'))) 
-
-                    {
-                        throw new FormatException("No delimiter found");
-                    }
-                    List<string> customDelim = sections[0].Remove(0, 2).Split(new char[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    customDelim.ForEach(f => delimiters.Add(f));
-                    input = sections[1];
-                }
-                catch (FormatException)
-                {
-                    throw;
-                }
-                catch (Exception)
-                {
-                    throw new FormatException("Custom delimiter format is not correct.");
-                }
+                input = AddSeperators(input);
             }
-            List<string> parts = input.Split(delimiters.ToArray<string>(), StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            return FinalResult(input);
+
+        }
+
+        private string AddSeperators(string number)
+        {
+            try
+            {
+                List<string> seperators = number.Split(new string[] { "\n", "\\n" }, 2, StringSplitOptions.RemoveEmptyEntries).ToList();
+                if (seperators[0].Length > 3 && (!seperators[0].Contains('[') || !seperators[0].Contains(']')))
+
+                {
+                    throw new FormatException("No delimiters/seperators found");
+                }
+
+                List<string> del = seperators[0].Remove(0, 2).Split(new char[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                              
+
+                foreach (var d in del) {
+                    delimiters.Add(d);
+                }
+                
+                number = seperators[1];
+
+                return number;
+            }
+            catch (FormatException)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                throw new FormatException("Custom delimiter format is not correct.");
+            }
+        }
+
+
+        public int FinalResult(string number)
+        {
+            List<string> newNum = number.Split(delimiters.ToArray<string>(), StringSplitOptions.RemoveEmptyEntries).ToList();
             int result = 0;
-            List<int> rejectedNumbers = new List<int>();
-            foreach (string part in parts)
+            List<int> rejectedNegtaviveNum = new List<int>();
+            foreach (string n in newNum)
             {
                 try
                 {
-                    int value = Int32.Parse(part);
-                    if (value < 0)
+                    int value = Int32.Parse(n);
+                    if (value < defaultNumber)
                     {
-                        rejectedNumbers.Add(value);
+                        rejectedNegtaviveNum.Add(value);
                     }
-                    else if (value > 1000) 
+                    else if (value > maxNo)
                     {
                         result += 0;
                     }
@@ -89,12 +118,17 @@ namespace StringCalculator
                     result += 0;
                 }
             }
-            if (rejectedNumbers.Count != 0)
+            if (rejectedNegtaviveNum.Count != 0)
             {
-                string rejectedStringMsg = "Negative Number(s) are not accepted. You entered: ";
-                rejectedNumbers.ForEach(f => rejectedStringMsg += f.ToString() + " ");
-                throw new CalculatorException(rejectedStringMsg); 
+                string rejectedStringMsg = "Negative Number(s) are not allowed. You entered: ";
+
+                foreach (var rejNum in rejectedNegtaviveNum) {
+                    rejectedStringMsg += rejNum.ToString() + " ";
+                }
+                
+                throw new CalculatorException(rejectedStringMsg);
             }
+
             return result;
         }
     }

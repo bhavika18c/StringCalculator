@@ -11,10 +11,6 @@ namespace StringCalculator
     {
         public string ClientMessage { get; set; }
 
-        public string Action { get; set; }
-
-        
-      
         public CalculatorException(string message, string ClientMessage, Exception innerException)
           : base(message, innerException)
         {
